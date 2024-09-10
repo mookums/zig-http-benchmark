@@ -1,0 +1,28 @@
+.{
+    .name = "http-benchmark",
+    .version = "0.0.0",
+    .minimum_zig_version = "0.13.0",
+
+    .dependencies = .{
+        .zap = .{
+            .url = "https://github.com/zigzap/zap/archive/v0.8.0.tar.gz",
+            .hash = "12209936c3333b53b53edcf453b1670babb9ae8c2197b1ca627c01e72670e20c1a21",
+        },
+        .httpz = .{
+            .url = "https://github.com/karlseguin/http.zig/archive/zig-0.13.tar.gz",
+            .hash = "122041d9c6961cd3c3436d7d47568855577365f35a5edf6ced3b9b29cae4a811998e",
+        },
+        .zzz = .{
+            .url = "https://github.com/mookums/zzz/archive/main.tar.gz",
+            .hash = "1220e74fa6cae9b72ea7b1236801d1c2ed090e7df3bf14db3b7c5e379cb9ebb7cc41",
+        },
+    },
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "impl",
+        "LICENSE",
+        "README.md",
+    },
+}
