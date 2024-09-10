@@ -1,5 +1,6 @@
 const std = @import("std");
 const zap = @import("zap");
+const options = @import("options");
 
 fn on_request_minimal(r: zap.Request) void {
     r.sendBody("This is an HTTP benchmark") catch return;
@@ -18,7 +19,8 @@ pub fn main() !void {
 
     // start worker threads
     zap.start(.{
-        .threads = 4,
-        .workers = 4, // empirical tests: yield best perf on my machine
+        .threads = options.threads,
+        .workers = options.threads,
     });
+    defer zap.stop();
 }

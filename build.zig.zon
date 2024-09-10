@@ -14,7 +14,7 @@
         },
         .zzz = .{
             .url = "https://github.com/mookums/zzz/archive/main.tar.gz",
-            .hash = "1220e74fa6cae9b72ea7b1236801d1c2ed090e7df3bf14db3b7c5e379cb9ebb7cc41",
+            .hash = "1220e92c34dd5410ce5b37f61e6b2425bd44b4978832ca6438510793d66d23757e9c",
         },
     },
 

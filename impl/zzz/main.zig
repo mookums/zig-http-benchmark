@@ -1,21 +1,26 @@
 const std = @import("std");
 const zzz = @import("zzz");
+const options = @import("options");
 const http = zzz.HTTP;
 
 pub fn main() !void {
-    const allocator = std.heap.page_allocator;
+    const allocator = std.heap.c_allocator;
 
     var router = http.Router.init(allocator);
     defer router.deinit();
     try router.serve_route("/", http.Route.init().get(struct {
         fn base_handler(_: http.Request, response: *http.Response, _: http.Context) void {
-            response.set(.{ .status = .OK, .mime = http.Mime.HTML, .body = "This is an HTTP benchmark" });
+            response.set(.{
+                .status = .OK,
+                .mime = http.Mime.HTML,
+                .body = "This is an HTTP benchmark",
+            });
         }
     }.base_handler));
 
     var server = http.Server(.plain).init(.{
         .allocator = allocator,
-        .threading = .{ .multi_threaded = .{ .count = 3 } },
+        .threading = .{ .multi_threaded = .{ .count = options.threads } },
     }, null);
     defer server.deinit();
 
