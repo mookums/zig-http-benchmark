@@ -56,8 +56,12 @@ for subject in ${SUBJECTS[@]}; do
             EXEC="./zig-out/bin/$subject"
             ;;
         go)
-            cd impl/go && go build main.go > /dev/null && cd ../../ 
+            cd impl/go && go build main.go > /dev/null && cd ../../
             EXEC="./impl/go/main"
+            ;;
+        gnet)
+            cd impl/gnet && go build main.go > /dev/null && cd ../../
+            EXEC="./impl/gnet/main"
             ;;
         axum)
             cargo build --release --manifest-path=impl/axum/Cargo.toml 2> /dev/null
