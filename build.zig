@@ -1,7 +1,9 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    const target = b.standardTargetOptions(.{});
+    const target = b.resolveTargetQuery(.{
+        .abi = .musl,
+    });
     const optimize = b.standardOptimizeOption(.{});
     const threads = b.option(u32, "threads", "Number of threads used") orelse 2;
 
