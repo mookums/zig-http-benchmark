@@ -31,6 +31,12 @@ append_to_array() {
     fi
 }
 
+cleanup() {
+    echo "Cleaning..."
+    kill -15 $(lsof -t -i:3000) 2> /dev/null || true
+    wait
+}
+
 header="connections"
 
 kill -9 $(lsof -t -i:3000) 2> /dev/null
@@ -54,7 +60,7 @@ for subject in ${SUBJECTS[@]}; do
     header+=",$subject"
 
     for conn_count in ${CONNECTIONS[@]}; do
-        kill -15 $(lsof -t -i:3000) 2> /dev/null
+        cleanup
 
         $TSK_SRV ./zig-out/bin/"$subject" 2> /dev/null &
         PID=$!
@@ -66,7 +72,7 @@ for subject in ${SUBJECTS[@]}; do
 
         printf "waiting"
 
-        until curl --output /dev/null --silent --fail http://127.0.0.1:3000; do
+        until curl --output /dev/null --silent --fail --max-time 1 http://127.0.0.1:3000; do
             printf '.'
             sleep 1
         done
@@ -76,6 +82,7 @@ for subject in ${SUBJECTS[@]}; do
         append_to_array "$conn_count" "$RPS"
 
         kill -15 $PID 2> /dev/null
+        wait $PID 2> /dev/null || true
     done
 done
 

@@ -8,6 +8,7 @@ pub fn main() !void {
 
     var router = http.Router.init(allocator);
     defer router.deinit();
+
     try router.serve_route("/", http.Route.init().get(struct {
         fn base_handler(_: http.Request, response: *http.Response, _: http.Context) void {
             response.set(.{
