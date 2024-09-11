@@ -10,9 +10,9 @@ echo "Task Load Interval: $TSK_LOAD_INTERVAL"
 
 THREADS=$(($CORE_COUNT / 2))
 CONNECTIONS=(50 100 200 300 400 500 600 700 800)
-DURATION_SECONDS=10
+DURATION_SECONDS=$1
 
-SUBJECTS="$@"
+SUBJECTS="${@:2}"
 echo "Benchmarking: $SUBJECTS"
 
 TSK_SRV="taskset -c $TSK_SRV_INTERVAL"
@@ -33,6 +33,8 @@ append_to_array() {
 
 header="connections"
 
+kill -9 $(lsof -t -i:3000) 2> /dev/null
+
 for subject in ${SUBJECTS[@]}; do
     if [ -z "$subject" ] ; then
         echo "usage: $0 <list of subjects>"
@@ -52,16 +54,28 @@ for subject in ${SUBJECTS[@]}; do
     header+=",$subject"
 
     for conn_count in ${CONNECTIONS[@]}; do
+        kill -15 $(lsof -t -i:3000) 2> /dev/null
+
         $TSK_SRV ./zig-out/bin/"$subject" 2> /dev/null &
         PID=$!
         URL=http://127.0.0.1:3000
-        sleep 3
+
         echo "========================================================================"
         echo "                          $subject @ $conn_count Conn" 
         echo "========================================================================"
+
+        printf "waiting"
+
+        until curl --output /dev/null --silent --fail http://127.0.0.1:3000; do
+            printf '.'
+            sleep 1
+        done
+        printf '\r'
+
         RPS=$($TSK_LOAD wrk -c $conn_count -t $THREADS -d $DURATION_SECONDS --latency $URL | tee /dev/tty | awk -F: 'NR==12 {print $2}' | tr -d "\n ")
         append_to_array "$conn_count" "$RPS"
-        kill $(lsof -t -i:3000) 2> /dev/null
+
+        kill -15 $PID 2> /dev/null
     done
 done
 
