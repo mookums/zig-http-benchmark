@@ -59,31 +59,28 @@ for subject in ${SUBJECTS[@]}; do
 
     header+=",$subject"
 
+    cleanup
+    $TSK_SRV ./zig-out/bin/"$subject" 2> /dev/null &
+    PID=$!
+    URL=http://127.0.0.1:3000
+
+    printf "waiting"
+    until curl --output /dev/null --silent --fail --max-time 1 http://127.0.0.1:3000; do
+        printf '.'
+        sleep 1
+    done
+    printf '\r'
+
     for conn_count in ${CONNECTIONS[@]}; do
-        cleanup
-
-        $TSK_SRV ./zig-out/bin/"$subject" 2> /dev/null &
-        PID=$!
-        URL=http://127.0.0.1:3000
-
         echo "========================================================================"
-        echo "                          $subject @ $conn_count Conn" 
+        echo "                      $subject @ $conn_count Conn" 
         echo "========================================================================"
-
-        printf "waiting"
-
-        until curl --output /dev/null --silent --fail --max-time 1 http://127.0.0.1:3000; do
-            printf '.'
-            sleep 1
-        done
-        printf '\r'
-
         RPS=$($TSK_LOAD wrk -c $conn_count -t $THREADS -d $DURATION_SECONDS --latency $URL | tee /dev/tty | awk -F: 'NR==12 {print $2}' | tr -d "\n ")
         append_to_array "$conn_count" "$RPS"
-
-        kill -15 $PID 2> /dev/null
-        wait $PID 2> /dev/null || true
     done
+
+    kill -15 $PID 2> /dev/null
+    wait $PID 2> /dev/null || true
 done
 
 printf "%s\n" "$header" > "result/benchmarks.csv"
