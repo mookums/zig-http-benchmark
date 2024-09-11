@@ -12,10 +12,11 @@ TSK_LOAD_INTERVAL="$(($CORE_COUNT/2))-$(($CORE_COUNT - 1))"
 echo "Task Load Interval: $TSK_LOAD_INTERVAL"
 
 THREADS=$(($CORE_COUNT / 2))
-CONNECTIONS=(50 100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 850 900 950 1000 1100 1200 1300 1400 1500 2000)
-DURATION_SECONDS=$1
+CONNECTIONS=(50 100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 850 900 950 1000 1100 1200 1300 1400 1500)
+BENCHMARKING_TOOL=$1
+DURATION_SECONDS=$2
 
-SUBJECTS="${@:2}"
+SUBJECTS="${@:3}"
 echo "Benchmarking: $SUBJECTS"
 
 TSK_SRV="taskset -c $TSK_SRV_INTERVAL"
@@ -51,7 +52,7 @@ for subject in ${SUBJECTS[@]}; do
     fi
 
     case "$subject" in
-        zap|httpz|zzz|zig-std)
+        zap|httpz|zzz)
             zig build -Doptimize=ReleaseFast -Dthreads=$THREADS "$subject" 2> /dev/null
             EXEC="./zig-out/bin/$subject"
             ;;
@@ -63,9 +64,8 @@ for subject in ${SUBJECTS[@]}; do
             cd impl/fasthttp && go build main.go > /dev/null && cd ../../
             EXEC="./impl/fasthttp/main"
             ;;
-        gnet)
-            cd impl/gnet && go build main.go > /dev/null && cd ../../
-            EXEC="./impl/gnet/main"
+        bun)
+            EXEC="bun run ./impl/bun/index.ts"
             ;;
         axum)
             cargo build --release --manifest-path=impl/axum/Cargo.toml 2> /dev/null
@@ -80,23 +80,36 @@ for subject in ${SUBJECTS[@]}; do
     header+=",$subject"
 
     cleanup
-    $TSK_SRV $EXEC > /dev/null 2>&1 &
+    $TSK_SRV $EXEC &
     PID=$!
     URL=http://127.0.0.1:3000
 
-    printf "waiting"
     until curl --output /dev/null --silent --fail --max-time 1 http://127.0.0.1:3000; do
         printf '.'
         sleep 1
     done
-    printf '\r'
 
     for conn_count in ${CONNECTIONS[@]}; do
         echo "========================================================================"
-        echo "                      $subject @ $conn_count Conn" 
+        echo "                          $subject @ $conn_count Conn" 
         echo "========================================================================"
-        RPS=$($TSK_LOAD wrk -c $conn_count -t $THREADS -d $DURATION_SECONDS --latency $URL | tee /dev/tty | awk -F: 'NR==12 {print $2}' | tr -d "\n ")
-        append_to_array "$conn_count" "$RPS"
+        
+        case "$BENCHMARKING_TOOL" in
+            wrk)
+                RPS=$($TSK_LOAD wrk -c $conn_count -t $THREADS -d $DURATION_SECONDS --latency $URL | tee /dev/tty | awk -F: 'NR==12 {print $2}' | tr -d "\n ")
+                append_to_array "$conn_count" "$RPS"
+                ;;
+            oha)
+                OHA_JSON=$($TSK_LOAD oha -c $conn_count -z $(printf "%ssec" "$DURATION_SECONDS") --no-tui $URL -j)
+                RPS=$(echo $OHA_JSON | jq '.summary.requestsPerSec')
+                printf "%s\n" "$(echo $OHA_JSON  | jq ".summary")"
+                append_to_array "$conn_count" "$RPS"
+                ;;
+            *)
+                echo "not a valid benchmarking tool (wrk, oha)"
+                exit 1
+                ;;
+        esac
     done
 
     kill -15 $PID 2> /dev/null

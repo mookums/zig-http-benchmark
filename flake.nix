@@ -32,8 +32,12 @@
                 # Zig
                 zig
                 zls
+                # JS
+                bun
+                nodePackages.typescript-language-server
                 # Go
                 go
+                gopls
                 # Rust
                 rust-bin.stable.latest.default
                 rust-analyzer
@@ -46,7 +50,9 @@
                 python312Packages.python-lsp-server
                 # Benchmarking
                 wrk
+                oha
                 # Misc
+                jq
                 curl
                 lsof
             ];

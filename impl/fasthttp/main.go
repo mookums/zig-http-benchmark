@@ -5,7 +5,6 @@ import (
 )
 
 func baseHandler(c *fasthttp.RequestCtx) { 
-
     c.WriteString("This is an HTTP benchmark")
 }
 
