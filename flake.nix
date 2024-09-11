@@ -38,12 +38,16 @@
                 rust-bin.stable.latest.default
                 rust-analyzer
                 # Python
-                python3
-                python312Packages.matplotlib
+                (python3.withPackages (ps: with ps; [
+                    numpy
+                    pandas
+                    matplotlib
+                ]))
+                python312Packages.python-lsp-server
                 # Benchmarking
-                linuxPackages_latest.perf
                 wrk
                 # Misc
+                curl
                 lsof
             ];
         };
