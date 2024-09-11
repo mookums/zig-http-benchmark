@@ -1,5 +1,8 @@
 #! /usr/bin/env bash
 
+# Up the file limit.
+ulimit -n 4096
+
 # Extact the core count.
 CORE_COUNT=$(lscpu | awk -F: '/^CPU\(s\):/ {print $2}' | tr -d " \n")
 echo "Available Cores: $CORE_COUNT"
@@ -9,7 +12,7 @@ TSK_LOAD_INTERVAL="$(($CORE_COUNT/2))-$(($CORE_COUNT - 1))"
 echo "Task Load Interval: $TSK_LOAD_INTERVAL"
 
 THREADS=$(($CORE_COUNT / 2))
-CONNECTIONS=(50 100 200 300 400 500 600 700 800)
+CONNECTIONS=(50 100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 850 900 950 1000 1100 1200 1300 1400 1500 2000)
 DURATION_SECONDS=$1
 
 SUBJECTS="${@:2}"
@@ -48,8 +51,17 @@ for subject in ${SUBJECTS[@]}; do
     fi
 
     case "$subject" in
-        zap|httpz|zzz|zigstd)
-            zig build -Doptimize=ReleaseFast -Dthreads=$THREADS "$subject" > /dev/null
+        zap|httpz|zzz|zig-std)
+            zig build -Doptimize=ReleaseFast -Dthreads=$THREADS "$subject" 2> /dev/null
+            EXEC="./zig-out/bin/$subject"
+            ;;
+        go)
+            cd impl/go && go build main.go > /dev/null && cd ../../ 
+            EXEC="./impl/go/main"
+            ;;
+        axum)
+            cargo build --release --manifest-path=impl/axum/Cargo.toml 2> /dev/null
+            EXEC="./impl/axum/target/release/axum-benchmark"
             ;;
         *)
             echo "Unknown subject: $subject"
@@ -60,7 +72,7 @@ for subject in ${SUBJECTS[@]}; do
     header+=",$subject"
 
     cleanup
-    $TSK_SRV ./zig-out/bin/"$subject" 2> /dev/null &
+    $TSK_SRV $EXEC > /dev/null 2>&1 &
     PID=$!
     URL=http://127.0.0.1:3000
 

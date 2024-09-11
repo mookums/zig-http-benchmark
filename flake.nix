@@ -7,11 +7,14 @@
 
         zig.url = "github:mitchellh/zig-overlay";
         zls.url = "github:zigtools/zls/0.13.0";
+        
+        rust-overlay.url = "github:oxalica/rust-overlay";
     };
 
     outputs = inputs@{self, nixpkgs, flake-utils, ...}: 
     let
         overlays = [
+            (import inputs.rust-overlay)
             (final: prev: rec {
                 zigpkgs = inputs.zig.packages.${prev.system};
                 zig = zigpkgs."0.13.0";
@@ -29,6 +32,11 @@
                 # Zig
                 zig
                 zls
+                # Go
+                go
+                # Rust
+                rust-bin.stable.latest.default
+                rust-analyzer
                 # Python
                 python3
                 python312Packages.matplotlib

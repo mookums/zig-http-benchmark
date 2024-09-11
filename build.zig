@@ -20,7 +20,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     }).module("zzz");
 
-    add_benchmark(b, "zigstd", threads, target, optimize, null, b.path("impl/zigstd/main.zig"));
+    add_benchmark(b, "zig-std", threads, target, optimize, null, b.path("impl/zig-std/main.zig"));
     add_benchmark(b, "zap", threads, target, optimize, .{ .name = "zap", .module = zap }, b.path("impl/zap/main.zig"));
     add_benchmark(b, "httpz", threads, target, optimize, .{ .name = "httpz", .module = httpz }, b.path("impl/httpz/main.zig"));
     add_benchmark(b, "zzz", threads, target, optimize, .{ .name = "zzz", .module = zzz }, b.path("impl/zzz/main.zig"));
