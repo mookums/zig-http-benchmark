@@ -33,6 +33,10 @@ func main() {
 	multicore := true
 	server := &httpServer{}
 	addr := fmt.Sprintf("tcp://127.0.0.1:%d", port)
-	log.Fatal(gnet.Run(server, addr, gnet.WithMulticore(multicore)))
+	log.Fatal(gnet.Run(
+        server,
+        addr,
+        gnet.WithMulticore(multicore),
+    ))
 }
 

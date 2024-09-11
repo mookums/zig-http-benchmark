@@ -1,15 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 )
 
-func hello(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "This is an HTTP benchmark\n")
+func baseHandler(w http.ResponseWriter, req *http.Request) {
+    w.Write([]byte("This is an HTTP benchmark"))
 }
 
 func main() {
-	http.HandleFunc("/", hello)
+	http.HandleFunc("/", baseHandler)
 	http.ListenAndServe("127.0.0.1:3000", nil)
 }

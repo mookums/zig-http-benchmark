@@ -59,6 +59,10 @@ for subject in ${SUBJECTS[@]}; do
             cd impl/go && go build main.go > /dev/null && cd ../../
             EXEC="./impl/go/main"
             ;;
+        fasthttp)
+            cd impl/fasthttp && go build main.go > /dev/null && cd ../../
+            EXEC="./impl/fasthttp/main"
+            ;;
         gnet)
             cd impl/gnet && go build main.go > /dev/null && cd ../../
             EXEC="./impl/gnet/main"
