@@ -52,7 +52,7 @@ for subject in ${SUBJECTS[@]}; do
     fi
 
     case "$subject" in
-        zap|httpz|zzz)
+        zap|httpz|zzz|zzz-st)
             zig build -Doptimize=ReleaseFast -Dthreads=$THREADS "$subject" 2> /dev/null
             EXEC="./zig-out/bin/$subject"
             ;;
