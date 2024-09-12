@@ -3,9 +3,7 @@ const zzz = @import("zzz");
 const http = zzz.HTTP;
 
 pub fn main() !void {
-    var arena = std.heap.ArenaAllocator.init(std.heap.c_allocator);
-    defer arena.deinit();
-    const allocator = arena.allocator();
+    const allocator = std.heap.c_allocator;
 
     var router = http.Router.init(allocator);
     defer router.deinit();
@@ -23,10 +21,16 @@ pub fn main() !void {
     var server = http.Server(.plain).init(.{
         .allocator = allocator,
         .threading = .single_threaded,
+        .size_backlog = 128,
         .size_connections_max = 2048,
+        .size_socket_buffer = 512,
+        .size_connection_arena_retain = 64,
     }, null);
     defer server.deinit();
 
     try server.bind("0.0.0.0", 3000);
-    try server.listen(.{ .router = &router });
+    try server.listen(.{
+        .router = &router,
+        .num_captures_max = 0,
+    });
 }

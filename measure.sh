@@ -22,9 +22,14 @@ echo "Benchmarking: $SUBJECTS"
 TSK_SRV="taskset -c $TSK_SRV_INTERVAL"
 TSK_LOAD="taskset -c $TSK_LOAD_INTERVAL"
 
-declare -A rps_array
+REQUEST_CSV="./result/request.csv"
+MEMORY_CSV="./result/memory.csv"
 
-append_to_array() {
+
+declare -A rps_array
+declare -A mem_array
+
+append_to_rps() {
     local conn_count=$1
     local rps=$2
 
@@ -35,13 +40,21 @@ append_to_array() {
     fi
 }
 
+append_to_mem() {
+    local subject=$1
+    local mem=$2
+
+    mem_array[$subject]="$mem"
+}
+
 cleanup() {
     echo "Cleaning..."
     kill -15 $(lsof -t -i:3000) 2> /dev/null || true
     wait
 }
 
-header="connections"
+rps_header="connections"
+mem_header="memory,server"
 
 kill -9 $(lsof -t -i:3000) 2> /dev/null
 
@@ -73,11 +86,15 @@ for subject in ${SUBJECTS[@]}; do
             ;;
     esac
 
-    header+=",$subject"
+    rps_header+=",$subject"
 
     cleanup
+
+    OUTPUT_FILE=$(printf "/tmp/output_%s.txt" "$subject")
+    echo "" > "$OUTPUT_FILE"
+
     printf "running: %s!\n" "$EXEC"
-    $TSK_SRV $EXEC &
+    (/usr/bin/env time -q -f "%M" $TSK_SRV $EXEC 2> "$OUTPUT_FILE") &
     PID=$!
     URL=http://127.0.0.1:3000
 
@@ -85,6 +102,7 @@ for subject in ${SUBJECTS[@]}; do
         printf '.'
         sleep 1
     done
+    printf '\n'
 
     for conn_count in ${CONNECTIONS[@]}; do
         echo "========================================================================"
@@ -94,13 +112,13 @@ for subject in ${SUBJECTS[@]}; do
         case "$BENCHMARKING_TOOL" in
             wrk)
                 RPS=$($TSK_LOAD wrk -c $conn_count -t $THREADS -d $DURATION_SECONDS --latency $URL | tee /dev/tty | awk -F: 'NR==12 {print $2}' | tr -d "\n ")
-                append_to_array "$conn_count" "$RPS"
+                append_to_rps "$conn_count" "$RPS"
                 ;;
             oha)
                 OHA_JSON=$($TSK_LOAD oha -c $conn_count -z $(printf "%ssec" "$DURATION_SECONDS") --no-tui $URL -j)
                 RPS=$(echo $OHA_JSON | jq '.summary.requestsPerSec')
                 printf "%s\n" "$(echo $OHA_JSON  | jq ".summary")"
-                append_to_array "$conn_count" "$RPS"
+                append_to_rps "$conn_count" "$RPS"
                 ;;
             *)
                 echo "not a valid benchmarking tool (wrk, oha)"
@@ -109,14 +127,35 @@ for subject in ${SUBJECTS[@]}; do
         esac
     done
 
+    PIDS=$(lsof -t -i:3000)
+    for pid in ${PIDS[@]}; do
+        kill -15 $pid 2> /dev/null
+        wait $pid 2> /dev/null || true
+    done
+
+    # wait for peak mem usage to get written
+    while [ ! -s "$OUTPUT_FILE" ]; do
+        sleep 1
+    done
+
+    MEM=$(cat "$OUTPUT_FILE")
+    printf "Peak Mem: %d kB\n" "$MEM"
+    append_to_mem "$subject" "$MEM"
+
     kill -15 $PID 2> /dev/null
     wait $PID 2> /dev/null || true
+
+    rm $OUTPUT_FILE
 done
 
-printf "%s\n" "$header" > "result/benchmarks.csv"
-
+printf "%s\n" "$rps_header" > $REQUEST_CSV 
 for conn_count in ${CONNECTIONS[@]}; do
     rps_values="${rps_array[$conn_count]}"
-    printf "%d%s\n" "$conn_count" "$rps_values" >> "result/benchmarks.csv"
+    printf "%d%s\n" "$conn_count" "$rps_values" >> $REQUEST_CSV 
 done
 
+printf "%s\n" "$mem_header" > $MEMORY_CSV 
+for subject in ${SUBJECTS[@]}; do
+    mem_value="${mem_array[$subject]}"
+    printf "%d,%s\n" "$mem_value" "$subject" >> $MEMORY_CSV 
+done

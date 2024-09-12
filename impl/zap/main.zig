@@ -11,11 +11,9 @@ pub fn main() !void {
         .port = 3000,
         .on_request = on_request_minimal,
         .log = false,
-        .max_clients = 100000,
+        .max_clients = 2048,
     });
     try listener.listen();
-
-    std.debug.print("Listening on 0.0.0.0:3000\n", .{});
 
     // start worker threads
     zap.start(.{

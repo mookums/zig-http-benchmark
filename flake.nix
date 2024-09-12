@@ -52,6 +52,7 @@
                 wrk
                 oha
                 # Misc
+                time
                 jq
                 curl
                 lsof

@@ -22,6 +22,10 @@ pub fn main() !void {
     var server = http.Server(.plain).init(.{
         .allocator = allocator,
         .threading = .{ .multi_threaded = .{ .count = options.threads } },
+        // Divides the connections across the threads.
+        .size_connections_max = @intFromFloat(
+            @ceil(@log(2048.0 / @as(f32, @floatFromInt(options.threads))) / @log(2.0)),
+        ),
     }, null);
     defer server.deinit();
 
