@@ -56,13 +56,9 @@ for subject in ${SUBJECTS[@]}; do
             zig build -Doptimize=ReleaseFast -Dthreads=$THREADS "$subject" 2> /dev/null
             EXEC="./zig-out/bin/$subject"
             ;;
-        go)
-            cd impl/go && go build main.go > /dev/null && cd ../../
-            EXEC="./impl/go/main"
-            ;;
-        fasthttp)
-            cd impl/fasthttp && go build main.go > /dev/null && cd ../../
-            EXEC="./impl/fasthttp/main"
+        go|fasthttp)
+            cd impl/$subject && go build main.go > /dev/null && cd ../../
+            EXEC="./impl/$subject/main"
             ;;
         bun)
             EXEC="bun run ./impl/bun/index.ts"
@@ -80,6 +76,7 @@ for subject in ${SUBJECTS[@]}; do
     header+=",$subject"
 
     cleanup
+    printf "running: %s!\n" "$EXEC"
     $TSK_SRV $EXEC &
     PID=$!
     URL=http://127.0.0.1:3000

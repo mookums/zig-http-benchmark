@@ -2,6 +2,17 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+colors = {
+    'zzz': 'green',
+    'httpz': 'magenta',
+    'zap': 'orange',
+    'zzz-st': 'black',
+    'go': 'blue',
+    'fasthttp': 'red',
+    'bun': 'cyan',
+    'axum': 'brown'
+}
+
 def plot_benchmarks(csv_path, x_label, y_label, title, out_path):
     df = pd.read_csv(csv_path, index_col=0)
 
@@ -9,7 +20,7 @@ def plot_benchmarks(csv_path, x_label, y_label, title, out_path):
     num_columns = len(df.columns)
 
     for i, column in enumerate(df.columns):
-        plt.plot(df.index, df[column], marker='o', label=column)
+        plt.plot(df.index, df[column], marker='o', label=column, color=colors[column])
 
     plt.xlabel(x_label)
     plt.ylabel(y_label)
