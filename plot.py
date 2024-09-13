@@ -1,3 +1,7 @@
+import socket
+import os
+import shutil
+import multiprocessing
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -50,6 +54,15 @@ def plot_memory(csv_path, x_label, y_label, title, out_path):
     plt.savefig(out_path, bbox_inches='tight')
     plt.close()
 
+host = socket.gethostname()
+cores = int(multiprocessing.cpu_count() / 2)
 
-plot_requests("./result/request.csv", "Connections", "Requests per Second", "RPS vs Connections Benchmark", "result/req_per_sec.png")
-plot_memory("./result/memory.csv", "Peak Memory (kB)", "Implementation", "Peak Memory vs Implementation", "result/peak_memory.png")
+
+if not os.path.exists("./data"):
+    os.mkdir("./data")
+
+shutil.copy("./result/request.csv", format(f"./data/request_{host}_{cores}.csv"))
+shutil.copy("./result/memory.csv", format(f"./data/memory_{host}_{cores}.csv"))
+
+plot_requests("./result/request.csv", "Connections", "Requests per Second", format(f"RPS vs Connections Benchmark ({host} | CC: {cores})"), format(f"./data/req_per_sec_{host}_{cores}.png"))
+plot_memory("./result/memory.csv", "Peak Memory (kB)", "Implementation", format(f"Peak Memory vs Implementation ({host} | CC: {cores})"), format(f"./data/peak_memory_{host}_{cores}.png"))

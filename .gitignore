@@ -1,5 +1,7 @@
 .zig-cache
 zig-out
+data/*.csv
+data/*.png
 result/*.csv
 result/*.png
 target
