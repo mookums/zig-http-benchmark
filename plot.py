@@ -65,4 +65,4 @@ shutil.copy("./result/request.csv", format(f"./data/request_{host}_{cores}.csv")
 shutil.copy("./result/memory.csv", format(f"./data/memory_{host}_{cores}.csv"))
 
 plot_requests("./result/request.csv", "Connections", "Requests per Second", format(f"RPS vs Connections Benchmark ({host} | CC: {cores})"), format(f"./data/req_per_sec_{host}_{cores}.png"))
-plot_memory("./result/memory.csv", "Peak Memory (kB)", "Implementation", format(f"Peak Memory vs Implementation ({host} | CC: {cores})"), format(f"./data/peak_memory_{host}_{cores}.png"))
+plot_memory("./result/memory.csv", "Implementation", "Peak Memory (kB)", format(f"Peak Memory (kB) vs Implementation ({host} | CC: {cores})"), format(f"./data/peak_memory_{host}_{cores}.png"))
