@@ -3,14 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 colors = {
-    'zzz': 'green',
-    'httpz': 'magenta',
-    'zap': 'orange',
-    'zzz-st': 'black',
-    'go': 'blue',
-    'fasthttp': 'red',
-    'bun': 'cyan',
-    'axum': 'brown'
+    'zzz': 'tab:green',
+    'httpz': 'tab:purple',
+    'zap': 'tab:orange',
+    'go': 'tab:blue',
+    'fasthttp': 'tab:red',
+    'bun': 'tab:pink',
+    'axum': 'tab:brown'
 }
 
 def plot_requests(csv_path, x_label, y_label, title, out_path):
