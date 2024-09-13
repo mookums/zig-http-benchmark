@@ -22,13 +22,17 @@ pub fn main() !void {
     var server = http.Server(.plain).init(.{
         .allocator = allocator,
         .threading = .{ .multi_threaded = .{ .count = options.threads } },
-        // Divides the connections across the threads.
         .size_connections_max = @intFromFloat(
             @ceil(@log(2048.0 / @as(f32, @floatFromInt(options.threads))) / @log(2.0)),
         ),
+        .size_socket_buffer = 256,
     }, null);
     defer server.deinit();
 
     try server.bind("0.0.0.0", 3000);
-    try server.listen(.{ .router = &router });
+    try server.listen(.{
+        .router = &router,
+        .num_header_max = 8,
+        .num_captures_max = 0,
+    });
 }

@@ -21,16 +21,15 @@ pub fn main() !void {
     var server = http.Server(.plain).init(.{
         .allocator = allocator,
         .threading = .single_threaded,
-        .size_backlog = 128,
         .size_connections_max = 2048,
-        .size_socket_buffer = 512,
-        .size_connection_arena_retain = 64,
+        .size_socket_buffer = 256,
     }, null);
     defer server.deinit();
 
     try server.bind("0.0.0.0", 3000);
     try server.listen(.{
         .router = &router,
+        .num_header_max = 8,
         .num_captures_max = 0,
     });
 }
