@@ -92,7 +92,7 @@ for subject in ${SUBJECTS[@]}; do
             zig build -Doptimize=ReleaseFast -Dthreads=$THREADS "$subject" 2> /dev/null
             EXEC="./zig-out/bin/$subject"
             ;;
-        go|fasthttp)
+        go|fasthttp|gnet)
             cd impl/$subject && go build -o "$subject" main.go > /dev/null && cd ../../
             EXEC="./impl/$subject/$subject"
             ;;

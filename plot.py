@@ -12,6 +12,7 @@ colors = {
     'zap': 'tab:orange',
     'go': 'tab:blue',
     'fasthttp': 'tab:red',
+    'gnet': 'tab:cyan',
     'bun': 'tab:pink',
     'axum': 'tab:brown'
 }
