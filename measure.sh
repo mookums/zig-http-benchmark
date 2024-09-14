@@ -135,7 +135,7 @@ for subject in ${SUBJECTS[@]}; do
         
         case "$BENCHMARKING_TOOL" in
             wrk)
-                RPS=$($TSK_LOAD wrk -c $conn_count -t $THREADS -d $DURATION_SECONDS --latency $URL | tee /dev/tty | awk -F: 'NR==12 {print $2}' | tr -d "\n ")
+                RPS=$($TSK_LOAD wrk -c $conn_count -t $THREADS -d $DURATION_SECONDS --latency $URL | tee /dev/tty | awk -F: '/^Requests\/sec:/ {print $2}' | tr -d "\n ")
                 append_to_rps "$conn_count" "$RPS"
                 ;;
             oha)
