@@ -31,7 +31,7 @@ pub fn main() !void {
         .allocator = allocator,
         .threading = .{ .multi_threaded = .{ .count = options.threads } },
         .size_connections_max = conn_per_thread,
-        .size_socket_buffer = 256,
+        .size_socket_buffer = 512,
     }, null);
     defer server.deinit();
 

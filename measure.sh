@@ -25,6 +25,29 @@ TSK_LOAD="taskset -c $TSK_LOAD_INTERVAL"
 REQUEST_CSV="./result/request.csv"
 MEMORY_CSV="./result/memory.csv"
 
+measure_peak_memory() {
+    local name=$1
+    local duration=$2
+    local peak_mem=0
+    local start_time=$(date +%s)
+    local end_time=$((start_time + duration))
+
+    # for duration
+    while [ $(date +%s) -lt $end_time ]; do
+        local current_mem=0
+        # this is important for zap that spawns more.
+        for p in $(pgrep $name); do
+            local mem=$(ps -o rss= -p $p | tr -d ' ')
+            current_mem=$((current_mem + mem))
+        done
+        if [ $current_mem -gt $peak_mem ]; then
+            peak_mem=$current_mem
+        fi
+        sleep 0.1
+    done
+
+    echo $peak_mem
+}
 
 declare -A rps_array
 declare -A mem_array
@@ -70,8 +93,8 @@ for subject in ${SUBJECTS[@]}; do
             EXEC="./zig-out/bin/$subject"
             ;;
         go|fasthttp)
-            cd impl/$subject && go build main.go > /dev/null && cd ../../
-            EXEC="./impl/$subject/main"
+            cd impl/$subject && go build -o "$subject" main.go > /dev/null && cd ../../
+            EXEC="./impl/$subject/$subject"
             ;;
         bun)
             EXEC="bun run ./impl/bun/index.ts"
@@ -90,11 +113,8 @@ for subject in ${SUBJECTS[@]}; do
 
     cleanup
 
-    OUTPUT_FILE=$(printf "/tmp/output_%s.txt" "$subject")
-    echo "" > "$OUTPUT_FILE"
-
     printf "running: %s!\n" "$EXEC"
-    (/usr/bin/env time -q -f "%M" $TSK_SRV $EXEC 2> "$OUTPUT_FILE") &
+    $TSK_SRV $EXEC &
     PID=$!
     URL=http://127.0.0.1:3000
 
@@ -104,10 +124,14 @@ for subject in ${SUBJECTS[@]}; do
     done
     printf '\n'
 
+    PEAK_MEM=0
     for conn_count in ${CONNECTIONS[@]}; do
         echo "========================================================================"
         echo "                          $subject @ $conn_count Conn" 
         echo "========================================================================"
+
+        measure_peak_memory $subject $DURATION_SECONDS > /tmp/peak_mem_$subject &
+        MEM_PID=$!
         
         case "$BENCHMARKING_TOOL" in
             wrk)
@@ -125,6 +149,14 @@ for subject in ${SUBJECTS[@]}; do
                 exit 1
                 ;;
         esac
+
+        wait $MEM_PID
+        CONN_PEAK_MEM=$(cat /tmp/peak_mem_$subject)
+        rm /tmp/peak_mem_$subject
+
+        if [ $CONN_PEAK_MEM -gt $PEAK_MEM ]; then
+            PEAK_MEM=$CONN_PEAK_MEM
+        fi
     done
 
     PIDS=$(lsof -t -i:3000)
@@ -133,19 +165,11 @@ for subject in ${SUBJECTS[@]}; do
         wait $pid 2> /dev/null || true
     done
 
-    # wait for peak mem usage to get written
-    while [ ! -s "$OUTPUT_FILE" ]; do
-        sleep 1
-    done
-
-    MEM=$(cat "$OUTPUT_FILE")
-    printf "Peak Mem: %d kB\n" "$MEM"
-    append_to_mem "$subject" "$MEM"
+    printf "Peak Mem: %d kB\n" "$PEAK_MEM"
+    append_to_mem "$subject" "$PEAK_MEM"
 
     kill -15 $PID 2> /dev/null
     wait $PID 2> /dev/null || true
-
-    rm $OUTPUT_FILE
 done
 
 printf "%s\n" "$rps_header" > $REQUEST_CSV 
