@@ -19,18 +19,10 @@ pub fn main() !void {
         }
     }.base_handler));
 
-    // Calculates the nearest power of two for dividing the total number
-    // of connections by the allocated number of threads.
-    //
-    // This should probably be done automatically in zzz...
-    const conn_per_thread: u16 = std.math.pow(u16, 2, @intFromFloat(
-        @ceil(@log(2000.0 / @as(f32, @floatFromInt(options.threads))) / @log(2.0)),
-    ));
-
     var server = http.Server(.plain, .busy_loop).init(.{
         .allocator = allocator,
         .threading = .{ .multi_threaded = .{ .count = options.threads } },
-        .size_connections_max = conn_per_thread,
+        .size_connections_max = 2000 / options.threads,
         .size_socket_buffer = 512,
     });
     defer server.deinit();

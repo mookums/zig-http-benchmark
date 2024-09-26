@@ -11,7 +11,7 @@ pub fn main() !void {
         .port = 3000,
         .on_request = on_request_minimal,
         .log = false,
-        .max_clients = 2048,
+        .max_clients = 2000,
     });
     try listener.listen();
 

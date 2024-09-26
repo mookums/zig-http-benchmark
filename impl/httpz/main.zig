@@ -8,7 +8,10 @@ pub fn main() !void {
     var server = try httpz.Server().init(allocator, .{
         .address = "0.0.0.0",
         .port = 3000,
-        .workers = .{ .count = options.threads },
+        .workers = .{
+            .count = options.threads,
+            .max_conn = 2000,
+        },
         .thread_pool = .{ .count = options.threads },
     });
     defer server.deinit();
