@@ -48,6 +48,9 @@
                     matplotlib
                 ]))
                 python312Packages.python-lsp-server
+                # Others
+                nginx
+                apacheHttpd
                 # Benchmarking
                 wrk
                 oha
