@@ -24,10 +24,10 @@ pub fn main() !void {
     //
     // This should probably be done automatically in zzz...
     const conn_per_thread: u16 = std.math.pow(u16, 2, @intFromFloat(
-        @ceil(@log(2048.0 / @as(f32, @floatFromInt(options.threads))) / @log(2.0)),
+        @ceil(@log(2000.0 / @as(f32, @floatFromInt(options.threads))) / @log(2.0)),
     ));
 
-    var server = http.Server(.plain, .auto).init(.{
+    var server = http.Server(.plain, .epoll).init(.{
         .allocator = allocator,
         .threading = .{ .multi_threaded = .{ .count = options.threads } },
         .size_connections_max = conn_per_thread,

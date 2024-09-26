@@ -12,7 +12,7 @@ TSK_LOAD_INTERVAL="$(($CORE_COUNT/2))-$(($CORE_COUNT - 1))"
 echo "Task Load Interval: $TSK_LOAD_INTERVAL"
 
 THREADS=$(($CORE_COUNT / 2))
-CONNECTIONS=(50 100 150 200 250 300 350 400 450 500 550 600 650 700 750 800 850 900 950 1000)
+CONNECTIONS=(100 200 300 400 500 600 700 800 900 1000 1100 1300 1500 1800)
 BENCHMARKING_TOOL=$1
 DURATION_SECONDS=$2
 
@@ -88,7 +88,7 @@ for subject in ${SUBJECTS[@]}; do
     fi
 
     case "$subject" in
-        zap|httpz|zzz)
+        zap|httpz|zzz|zzz_busyloop|zzz_epoll|zzz_iouring)
             zig build -Doptimize=ReleaseFast -Dthreads=$THREADS "$subject" 2> /dev/null
             EXEC="./zig-out/bin/$subject"
             ;;

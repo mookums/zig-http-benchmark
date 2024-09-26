@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 
 colors = {
     'zzz': 'tab:green',
+    'zzz_busyloop': 'cyan',
+    'zzz_epoll': 'deeppink',
+    'zzz_iouring': 'crimson',
     'httpz': 'tab:purple',
     'zap': 'tab:orange',
     'go': 'tab:blue',
