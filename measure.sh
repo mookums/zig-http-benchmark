@@ -74,6 +74,12 @@ cleanup() {
     echo "Cleaning..."
     kill -15 $(lsof -t -i:3000) 2> /dev/null || true
     wait
+
+    # Wait for port to be closed.
+    while nc -z 127.0.0.1 3000
+    do
+        sleep 1
+    done
 }
 
 rps_header="connections"
@@ -102,6 +108,9 @@ for subject in ${SUBJECTS[@]}; do
         axum)
             cargo build --release --manifest-path=impl/axum/Cargo.toml 2> /dev/null
             EXEC="./impl/axum/target/release/axum-benchmark"
+            ;;
+        nginx)
+            EXEC="nginx -e /dev/null -c $PWD/impl/nginx/main.conf"
             ;;
         *)
             echo "Unknown subject: $subject"
