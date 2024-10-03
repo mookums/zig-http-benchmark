@@ -13,8 +13,8 @@
             .hash = "12208c1f2c5f730c4c03aabeb0632ade7e21914af03e6510311b449458198d0835d6",
         },
         .zzz = .{
-            .url = "git+https://github.com/mookums/zzz?ref=async-rework#94996a5d7b2964b0f1a770a0b3984ff96de3af7d",
-            .hash = "12208ea01f5da8c7e9274bb387c5066aafbefdd650ac98bd41b9c8a24c7e02f2cc97",
+            .url = "git+https://github.com/mookums/zzz?ref=async-rework#194581c1e78fbd1d41d7aa6a30a18b5bbf6f6004",
+            .hash = "122008b4d266ade955d6d5972726e7bb7e48147bc0c7f533e3644a4902c04828e59b",
         },
     },
 

@@ -22,7 +22,7 @@ pub fn main() !void {
     var server = http.Server(.plain, .io_uring).init(.{
         .allocator = allocator,
         .threading = .{ .multi_threaded = .{ .count = options.threads } },
-        .size_connections_max = @ceil(2000.0 / @as(f32, @floatFromInt(options.threads))),
+        .size_connections_max = try std.math.divCeil(u16, 2000, options.threads),
         .size_socket_buffer = 512,
     });
     defer server.deinit();
