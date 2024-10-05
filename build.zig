@@ -22,8 +22,14 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     }).module("zzz");
 
+    const zinc = b.dependency("zinc", .{
+        .target = target,
+        .optimize = optimize,
+    }).module("zinc");
+
     add_benchmark(b, "zap", threads, target, optimize, .{ .name = "zap", .module = zap }, b.path("impl/zap/main.zig"));
     add_benchmark(b, "httpz", threads, target, optimize, .{ .name = "httpz", .module = httpz }, b.path("impl/httpz/main.zig"));
+    add_benchmark(b, "zinc", threads, target, optimize, .{ .name = "zinc", .module = zinc }, b.path("impl/zinc/main.zig"));
     add_benchmark(b, "zzz", threads, target, optimize, .{ .name = "zzz", .module = zzz }, b.path("impl/zzz/main.zig"));
     add_benchmark(b, "zzz_busyloop", threads, target, optimize, .{ .name = "zzz", .module = zzz }, b.path("impl/zzz_busyloop/main.zig"));
     add_benchmark(b, "zzz_epoll", threads, target, optimize, .{ .name = "zzz", .module = zzz }, b.path("impl/zzz_epoll/main.zig"));

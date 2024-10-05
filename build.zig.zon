@@ -16,6 +16,10 @@
             .url = "git+https://github.com/mookums/zzz?ref=async-rework#194581c1e78fbd1d41d7aa6a30a18b5bbf6f6004",
             .hash = "122008b4d266ade955d6d5972726e7bb7e48147bc0c7f533e3644a4902c04828e59b",
         },
+        .zinc = .{
+            .url = "https://github.com/zon-dev/zinc/archive/refs/tags/0.1.0-beta4.tar.gz",
+            .hash = "12201f5d2138d81c9aa85bf18a550df6329d98f02645bc5f9e1eb82b2ed98d211bb6",
+        },
     },
 
     .paths = .{
