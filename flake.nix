@@ -39,7 +39,7 @@
                 go
                 gopls
                 # Rust
-                rust-bin.stable.latest.default
+                rust-bin.nightly.latest.default
                 rust-analyzer
                 # Python
                 (python3.withPackages (ps: with ps; [

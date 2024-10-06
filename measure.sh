@@ -99,9 +99,9 @@ for subject in ${SUBJECTS[@]}; do
         bun)
             EXEC="bun run ./impl/bun/index.ts"
             ;;
-        axum)
-            cargo build --release --manifest-path=impl/axum/Cargo.toml 2> /dev/null
-            EXEC="./impl/axum/target/release/axum-benchmark"
+        axum|faf)
+            cargo build --release --manifest-path=impl/$subject/Cargo.toml 2> /dev/null
+            EXEC="./impl/$subject/target/release/$subject-benchmark"
             ;;
         *)
             echo "Unknown subject: $subject"
