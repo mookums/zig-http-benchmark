@@ -4,7 +4,9 @@ const options = @import("options");
 const http = zzz.HTTP;
 
 pub fn main() !void {
-    const allocator = std.heap.c_allocator;
+    var gpa = std.heap.GeneralPurposeAllocator(.{ .thread_safe = true }){};
+    const allocator = gpa.allocator();
+    defer _ = gpa.deinit();
 
     var router = http.Router.init(allocator);
     defer router.deinit();
@@ -19,10 +21,13 @@ pub fn main() !void {
         }
     }.base_handler));
 
+    const conn_per_thread = try std.math.divCeil(u16, 2000, options.threads);
+
     var server = http.Server(.plain, .auto).init(.{
         .allocator = allocator,
-        .threading = .{ .multi_threaded = .{ .count = options.threads } },
-        .size_connections_max = try std.math.divCeil(u16, 2000, options.threads),
+        .threading = .{ .multi = options.threads },
+        .size_connections_max = conn_per_thread,
+        .size_completions_reap_max = @min(conn_per_thread, 256),
         .size_socket_buffer = 512,
     });
     defer server.deinit();
@@ -30,7 +35,7 @@ pub fn main() !void {
     try server.bind("0.0.0.0", 3000);
     try server.listen(.{
         .router = &router,
-        .num_header_max = 8,
+        .num_header_max = 16,
         .num_captures_max = 0,
     });
 }
