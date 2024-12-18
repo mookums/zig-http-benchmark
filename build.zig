@@ -1,9 +1,7 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    const target = b.resolveTargetQuery(.{
-        .abi = .musl,
-    });
+    const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const threads = b.option(u32, "threads", "Number of threads used") orelse 2;
 
@@ -56,9 +54,15 @@ fn add_benchmark(
         exe.root_module.addImport(lib.name, lib.module);
     }
 
+    const tardy = b.dependency("tardy", .{
+        .target = target,
+        .optimize = optimize,
+    }).module("tardy");
+
     var options = b.addOptions();
     options.addOption(u32, "threads", threads);
     exe.root_module.addOptions("options", options);
+    exe.root_module.addImport("tardy", tardy);
 
     const install = b.addInstallArtifact(exe, .{});
     b.getInstallStep().dependOn(&install.step);

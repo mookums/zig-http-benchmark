@@ -1,36 +1,70 @@
 const std = @import("std");
+const log = std.log.scoped(.@"examples/basic");
+
 const zzz = @import("zzz");
-const options = @import("options");
 const http = zzz.HTTP;
 
-pub fn main() !void {
-    const allocator = std.heap.c_allocator;
+const tardy = @import("tardy");
+const Tardy = tardy.Tardy(.auto);
+const Runtime = tardy.Runtime;
 
-    var router = http.Router.init(allocator);
+const Server = http.Server(.plain);
+const Router = Server.Router;
+const Context = Server.Context;
+const Route = Server.Route;
+
+pub fn main() !void {
+    const host: []const u8 = "0.0.0.0";
+    const port: u16 = 3000;
+
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer _ = gpa.deinit();
+
+    // Creating our Tardy instance that
+    // will spawn our runtimes.
+    var t = try Tardy.init(.{
+        .allocator = allocator,
+        .threading = .auto,
+    });
+    defer t.deinit();
+
+    var router = Router.init(allocator);
     defer router.deinit();
 
-    try router.serve_route("/", http.Route.init().get(struct {
-        fn base_handler(_: http.Request, response: *http.Response, _: http.Context) void {
-            response.set(.{
+    try router.serve_route("/", Route.init().get({}, struct {
+        fn handler_fn(ctx: *Context, _: void) !void {
+            try ctx.respond(.{
                 .status = .OK,
                 .mime = http.Mime.HTML,
                 .body = "This is an HTTP benchmark",
             });
         }
-    }.base_handler));
+    }.handler_fn));
 
-    var server = http.Server(.plain, .auto).init(.{
-        .allocator = allocator,
-        .threading = .{ .multi_threaded = .{ .count = options.threads } },
-        .size_connections_max = try std.math.divCeil(u16, 2000, options.threads),
-        .size_socket_buffer = 512,
-    });
-    defer server.deinit();
-
-    try server.bind("0.0.0.0", 3000);
-    try server.listen(.{
-        .router = &router,
-        .num_header_max = 8,
-        .num_captures_max = 0,
-    });
+    // This provides the entry function into the Tardy runtime. This will run
+    // exactly once inside of each runtime (each thread gets a single runtime).
+    try t.entry(
+        &router,
+        struct {
+            fn entry(rt: *Runtime, r: *const Router) !void {
+                var server = Server.init(.{
+                    .allocator = rt.allocator,
+                    .size_socket_buffer = 512,
+                    .size_connections_max = 256,
+                    .num_captures_max = 0,
+                    .num_queries_max = 0,
+                    .num_header_max = 16,
+                });
+                try server.bind(host, port);
+                try server.serve(r, rt);
+            }
+        }.entry,
+        {},
+        struct {
+            fn exit(rt: *Runtime, _: void) !void {
+                try Server.clean(rt);
+            }
+        }.exit,
+    );
 }
