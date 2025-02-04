@@ -5,7 +5,7 @@ const zzz = @import("zzz");
 const http = zzz.HTTP;
 
 const tardy = zzz.tardy;
-const Tardy = tardy.Tardy(.io_uring);
+const Tardy = tardy.Tardy(.poll);
 const Runtime = tardy.Runtime;
 const Socket = tardy.Socket;
 

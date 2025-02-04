@@ -1,70 +1,83 @@
 const std = @import("std");
-const log = std.log.scoped(.@"examples/basic");
+const options = @import("options");
 
 const zzz = @import("zzz");
 const http = zzz.HTTP;
 
-const tardy = @import("tardy");
+const tardy = zzz.tardy;
 const Tardy = tardy.Tardy(.auto);
 const Runtime = tardy.Runtime;
+const Socket = tardy.Socket;
 
-const Server = http.Server(.plain);
-const Router = Server.Router;
-const Context = Server.Context;
-const Route = Server.Route;
+const Server = http.Server;
+const Router = http.Router;
+const Context = http.Context;
+const Route = http.Route;
+const Middleware = http.Middleware;
+
+const Next = http.Next;
+const Response = http.Response;
+const Respond = http.Respond;
 
 pub fn main() !void {
     const host: []const u8 = "0.0.0.0";
     const port: u16 = 3000;
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa = std.heap.GeneralPurposeAllocator(.{ .thread_safe = true }){};
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
-    // Creating our Tardy instance that
-    // will spawn our runtimes.
-    var t = try Tardy.init(.{
-        .allocator = allocator,
-        .threading = .auto,
+    const count = try std.math.divCeil(usize, 1800, options.threads);
+
+    var t = try Tardy.init(allocator, .{
+        .threading = .{ .multi = options.threads },
+        .pooling = .static,
+        .size_tasks_initial = count,
+        .size_aio_reap_max = count,
     });
     defer t.deinit();
 
-    var router = Router.init(allocator);
-    defer router.deinit();
+    var router = try Router.init(allocator, &.{
+        Route.init("/").get({}, base_handler).layer(),
+    }, .{});
+    defer router.deinit(allocator);
 
-    try router.serve_route("/", Route.init().get({}, struct {
-        fn handler_fn(ctx: *Context, _: void) !void {
-            try ctx.respond(.{
-                .status = .OK,
-                .mime = http.Mime.HTML,
-                .body = "This is an HTTP benchmark",
-            });
-        }
-    }.handler_fn));
+    // create socket for tardy
+    var socket = try Socket.init(.{ .tcp = .{ .host = host, .port = port } });
+    defer socket.close_blocking();
+    try socket.bind();
+    try socket.listen(4096);
 
-    // This provides the entry function into the Tardy runtime. This will run
-    // exactly once inside of each runtime (each thread gets a single runtime).
+    const EntryParams = struct {
+        router: *const Router,
+        socket: Socket,
+        count: u32,
+    };
+
     try t.entry(
-        &router,
+        EntryParams{ .router = &router, .socket = socket, .count = @intCast(count) },
         struct {
-            fn entry(rt: *Runtime, r: *const Router) !void {
-                var server = Server.init(.{
-                    .allocator = rt.allocator,
-                    .size_socket_buffer = 512,
-                    .size_connections_max = 256,
-                    .num_captures_max = 0,
-                    .num_queries_max = 0,
-                    .num_header_max = 16,
+            fn entry(rt: *Runtime, p: EntryParams) !void {
+                var server = Server.init(rt.allocator, .{
+                    .stack_size = 1024 * 8,
+                    .socket_buffer_bytes = 512,
+                    .keepalive_count_max = null,
+                    .connection_count_max = p.count,
+
+                    .header_count_max = 8,
+                    .capture_count_max = 0,
+                    .query_count_max = 0,
                 });
-                try server.bind(host, port);
-                try server.serve(r, rt);
+                try server.serve(rt, p.router, p.socket);
             }
         }.entry,
-        {},
-        struct {
-            fn exit(rt: *Runtime, _: void) !void {
-                try Server.clean(rt);
-            }
-        }.exit,
     );
+}
+
+fn base_handler(_: *const Context, _: void) !Respond {
+    return .{ .standard = .{
+        .status = .OK,
+        .mime = http.Mime.HTML,
+        .body = "This is an HTTP benchmark",
+    } };
 }
