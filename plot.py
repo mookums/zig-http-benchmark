@@ -17,7 +17,8 @@ colors = {
     'fasthttp': 'tab:red',
     'gnet': 'gold',
     'bun': 'tab:pink',
-    'axum': 'tab:brown'
+    'axum': 'tab:brown',
+    'actix': 'tab:grey'
 }
 
 def plot_requests(csv_path, x_label, y_label, title, out_path):

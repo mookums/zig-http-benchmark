@@ -22,12 +22,9 @@ const Respond = http.Respond;
 pub fn main() !void {
     const host: []const u8 = "0.0.0.0";
     const port: u16 = 3000;
+    const allocator = std.heap.c_allocator;
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{ .thread_safe = true }){};
-    const allocator = gpa.allocator();
-    defer _ = gpa.deinit();
-
-    const count = try std.math.divCeil(usize, 1800, options.threads);
+    const count = try std.math.divCeil(usize, 2000, options.threads);
 
     var t = try Tardy.init(allocator, .{
         .threading = .{ .multi = options.threads },
@@ -59,7 +56,7 @@ pub fn main() !void {
         struct {
             fn entry(rt: *Runtime, p: EntryParams) !void {
                 var server = Server.init(rt.allocator, .{
-                    .stack_size = 1024 * 8,
+                    .stack_size = 1024 * 128,
                     .socket_buffer_bytes = 512,
                     .keepalive_count_max = null,
                     .connection_count_max = p.count,
